@@ -12,7 +12,7 @@ source detectionpi-env/bin/activate
 bash get_pi_requirements.sh
 sudo apt-get install libilmbase-dev libopenexr-dev libgstreamer1.0-dev libilmbase23
 ```
-Instal the model of you choice, those are Google defaults :
+Install the model of your choice, those are Google defaults :
 ```sh
 wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip
 unzip coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip -d Sample_TFLite_model
