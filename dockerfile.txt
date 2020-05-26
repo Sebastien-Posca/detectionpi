@@ -1,0 +1,14 @@
+FROM raspbian/buster:latest
+
+RUN apt-get update
+RUN apt-get dist-upgrade -y
+
+WORKDIR /tmp
+
+RUN # Install compile dependencies
+COPY get_pi_requirements.sh .
+RUN ./get_pi_requirements.sh
+RUN wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip && unzip coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip -d Sample_TFLite_model
+RUN apt -y install libilmbase-dev libopenexr-dev libgstreamer1.0-dev libilmbase23
+
+CMD python3 TFLite_detection_webcam.py --modeldir=Sample_TFLite_model
