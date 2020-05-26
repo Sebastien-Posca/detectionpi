@@ -3,13 +3,12 @@ Installation was only tested for raspbian-buster.
 ```sh
 sudo apt-get update
 sudo apt-get dist-upgrade
-git clone https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi.git
-mv TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi tflite1
-cd tflite1
+git clone https://github.com/Sebastien-Posca/detectionpi.git
+cd detectionpi
 sudo pip3 install virtualenv
 sudo apt-get install python3-venv
-python3 -m venv tflite1-env
-source tflite1-env/bin/activate
+python3 -m venv detectionpi-env
+source detectionpi-env/bin/activate
 bash get_pi_requirements.sh
 sudo apt-get install libilmbase-dev libopenexr-dev libgstreamer1.0-dev libilmbase23
 ```
@@ -23,9 +22,6 @@ Installation of mosquitto broker for MQTT :
 sudo apt install mosquitto mosquitto-clients
 sudo systemctl enable mosquitto
 ```
-
-
-
 
 # Start Script
 GUI version : 
@@ -41,4 +37,4 @@ python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model
 If you use a picam you must activate it : raspi-config => Interfacing Options => Camera
 
 
-
+Credit: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
