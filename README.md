@@ -11,6 +11,7 @@ python3 -m venv detectionpi-env
 source detectionpi-env/bin/activate
 bash get_pi_requirements.sh
 sudo apt-get install libilmbase-dev libopenexr-dev libgstreamer1.0-dev libilmbase23
+sudo pip3 install paho-mqtt
 ```
 Install the model of your choice, those are Google defaults :
 ```sh
