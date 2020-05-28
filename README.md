@@ -1,4 +1,40 @@
-# Installation
+# Installation with docker
+
+## Install Docker Compose on your rasp
+```sh
+sudo apt-get install -y libffi-dev libssl-dev
+```
+
+```sh
+sudo apt-get install -y python3 python3-pip
+```
+
+```sh
+sudo apt-get remove python-configparser
+```
+
+```sh
+sudo pip3 install docker-compose
+```
+## Build the images
+In the docker directory do :
+```sh
+docker-compose build
+```
+
+## Start the services
+In the docker directory do :
+```sh
+docker-compose up
+```
+
+## Stop the services
+In the docker directory do :
+```sh
+docker-compose down
+```
+
+# Manual Installation without docker
 Installation was only tested for raspbian-buster.
 ```sh
 sudo apt-get update
