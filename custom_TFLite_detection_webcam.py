@@ -26,7 +26,7 @@ import paho.mqtt.client as mqtt
 
 HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspbery/camera/presence"
-client = mqtt.Client("rasp1")
+client = mqtt.Client("detection_script")
 client.connect(HOST_NAME, 1883)
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
