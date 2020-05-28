@@ -24,7 +24,7 @@ from threading import Thread
 import importlib.util
 import paho.mqtt.client as mqtt
 
-HOST_NAME = "127.0.0.1"
+HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspbery/camera/presence"
 client = mqtt.Client("rasp1")
 client.connect(HOST_NAME, 1883)
