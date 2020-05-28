@@ -1,4 +1,40 @@
-# Installation
+# Installation with docker
+
+## Install Docker Compose on your rasp
+```sh
+sudo apt-get install -y libffi-dev libssl-dev
+```
+
+```sh
+sudo apt-get install -y python3 python3-pip
+```
+
+```sh
+sudo apt-get remove python-configparser
+```
+
+```sh
+sudo pip3 install docker-compose
+```
+## Build the images
+In the docker directory do :
+```sh
+docker-compose build
+```
+
+## Start the services
+In the docker directory do :
+```sh
+docker-compose up
+```
+
+## Stop the services
+In the docker directory do :
+```sh
+docker-compose down
+```
+
+# Manual Installation without docker
 Installation was only tested for raspbian-buster.
 ```sh
 sudo apt-get update
@@ -24,7 +60,7 @@ sudo apt install mosquitto mosquitto-clients
 sudo systemctl enable mosquitto
 ```
 
-# Start Script
+## Start Script
 GUI version : 
 ```sh
 python3 TFLite_detection_webcam.py --modeldir=Sample_TFLite_model 
@@ -34,7 +70,7 @@ Headless version with MQTT :
 python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model 
 ```
 
-# Activate the cam (if you use a picam)
+## Activate the cam (if you use a picam)
 If you use a picam you must activate it : raspi-config => Interfacing Options => Camera
 
 

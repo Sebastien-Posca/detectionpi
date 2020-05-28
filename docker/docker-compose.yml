@@ -11,8 +11,6 @@ services:
  detection:
       image: detection
       build: .
-      ports:
-        - "80:8000"
       depends_on:
         - "mqtt"
       volumes:
