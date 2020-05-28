@@ -166,11 +166,11 @@ time.sleep(1)
 
 #for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
-presence = False
-previousValue = False
+cpt = 0
+previousValue = 0
 while True:
-    previousValue = presence
-    presence = False
+    previousValue = cpt
+    cpt = 0
 
     # Grab frame from video stream
     frame1 = videostream.read()
@@ -200,8 +200,8 @@ while True:
         if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             if object_name == "person":
-                presence=True
-    if presence != previousValue :
-        client.publish(TOPIC_SEND_PRES, presence)
-        print(presence)
+                cpt = cpt +1
+    if cpt != previousValue :
+        client.publish(TOPIC_SEND_PRES, cpt)
+        print(cpt)
 videostream.stop()
