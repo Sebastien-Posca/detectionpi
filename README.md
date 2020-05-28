@@ -27,6 +27,7 @@ In the docker directory do :
 ```sh
 docker-compose up
 ```
+The number of person detected is send to the MQTT topic : "/raspberry/camera/presence"
 
 ## Stop the services
 In the docker directory do :
