@@ -60,7 +60,7 @@ sudo apt install mosquitto mosquitto-clients
 sudo systemctl enable mosquitto
 ```
 
-# Start Script
+## Start Script
 GUI version : 
 ```sh
 python3 TFLite_detection_webcam.py --modeldir=Sample_TFLite_model 
@@ -70,7 +70,7 @@ Headless version with MQTT :
 python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model 
 ```
 
-# Activate the cam (if you use a picam)
+## Activate the cam (if you use a picam)
 If you use a picam you must activate it : raspi-config => Interfacing Options => Camera
 
 
