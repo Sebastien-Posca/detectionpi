@@ -28,6 +28,8 @@ HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspbery/camera/presence"
 client = mqtt.Client("detection_script")
 client.connect(HOST_NAME, 1883)
+print("Connected to MQQT", flush=True)
+
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
 # Source - Adrian Rosebrock, PyImageSearch: https://www.pyimagesearch.com/2015/12/28/increasing-raspberry-pi-fps-with-python-and-opencv/
@@ -203,5 +205,5 @@ while True:
                 cpt = cpt +1
     if cpt != previousValue :
         client.publish(TOPIC_SEND_PRES, cpt)
-        print(cpt)
+        print(cpt, flush=True)
 videostream.stop()
