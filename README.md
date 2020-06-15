@@ -1,3 +1,6 @@
+## Activate the cam (if you use a picam)
+If you use a picam you must activate it : raspi-config => Interfacing Options => Camera
+
 # Installation with docker
 
 ## Install Docker Compose on your rasp
@@ -15,7 +18,7 @@ In the docker directory do :
 ```sh
 docker-compose up
 ```
-The number of person detected is send to the MQTT topic : "raspberry/camera/presence"
+The number of person detected is send to the MQTT topic : "raspberry/camera/presence"  
 Video Streaming is done on port 5000
 
 ## Stop the services
@@ -59,9 +62,5 @@ Headless version with MQTT :
 ```sh
 python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model 
 ```
-
-## Activate the cam (if you use a picam)
-If you use a picam you must activate it : raspi-config => Interfacing Options => Camera
-
 
 Credit: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
