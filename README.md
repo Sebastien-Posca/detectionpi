@@ -16,22 +16,12 @@ In the docker directory do :
 docker-compose up
 ```
 The number of person detected is send to the MQTT topic : "raspberry/camera/presence"
+Video Streaming is done on port 5000
 
 ## Stop the services
 In the docker directory do :
 ```sh
 docker-compose down
-```
-# Stream version with docker
-
-In the docker_stream directory do :
-```sh
-docker build -t <nom_image> .
-```
-
-Then :
-```sh
-docker run -p 5000:5000 --privileged -v /dev/video0:/dev/video0 <nom_image>
 ```
 
 # Manual Installation without docker
