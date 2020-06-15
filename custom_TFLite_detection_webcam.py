@@ -190,6 +190,7 @@ def detect_motion():
         previousValue = cpt
         cpt = 0
 
+        t1 = cv2.getTickCount()
         # Grab frame from video stream
         frame1 = videostream.read()
 
