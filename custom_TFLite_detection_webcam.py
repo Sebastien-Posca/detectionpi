@@ -23,12 +23,27 @@ import time
 from threading import Thread
 import importlib.util
 import paho.mqtt.client as mqtt
+from flask import Flask, render_template, Response
+from imutils.video import VideoStream
+from flask import Response
+from flask import Flask
+from flask import render_template
+import threading
+import datetime
+import imutils
 
 HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspbery/camera/presence"
 client = mqtt.Client("detection_script")
 client.connect(HOST_NAME, 1883)
-print("Connected to MQQT", flush=True)
+
+app = Flask(__name__)
+outputFrame = None
+
+@app.route('/')
+def index():
+    """Video streaming home page."""
+    return render_template('index.html')
 
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
@@ -72,138 +87,166 @@ class VideoStream:
     def stop(self):
 	# Indicate that the camera and thread should be stopped
         self.stopped = True
+def detect_motion():
+    global outputFrame
+    # Define and parse input arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--modeldir', help='Folder the .tflite file is located in',
+                        required=True)
+    parser.add_argument('--graph', help='Name of the .tflite file, if different than detect.tflite',
+                        default='detect.tflite')
+    parser.add_argument('--labels', help='Name of the labelmap file, if different than labelmap.txt',
+                        default='labelmap.txt')
+    parser.add_argument('--threshold', help='Minimum confidence threshold for displaying detected objects',
+                        default=0.5)
+    parser.add_argument('--resolution', help='Desired webcam resolution in WxH. If the webcam does not support the resolution entered, errors may occur.',
+                        default='1280x720')
+    parser.add_argument('--edgetpu', help='Use Coral Edge TPU Accelerator to speed up detection',
+                        action='store_true')
 
-# Define and parse input arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('--modeldir', help='Folder the .tflite file is located in',
-                    required=True)
-parser.add_argument('--graph', help='Name of the .tflite file, if different than detect.tflite',
-                    default='detect.tflite')
-parser.add_argument('--labels', help='Name of the labelmap file, if different than labelmap.txt',
-                    default='labelmap.txt')
-parser.add_argument('--threshold', help='Minimum confidence threshold for displaying detected objects',
-                    default=0.5)
-parser.add_argument('--resolution', help='Desired webcam resolution in WxH. If the webcam does not support the resolution entered, errors may occur.',
-                    default='1280x720')
-parser.add_argument('--edgetpu', help='Use Coral Edge TPU Accelerator to speed up detection',
-                    action='store_true')
+    args = parser.parse_args()
 
-args = parser.parse_args()
+    MODEL_NAME = args.modeldir
+    GRAPH_NAME = args.graph
+    LABELMAP_NAME = args.labels
+    min_conf_threshold = float(args.threshold)
+    resW, resH = args.resolution.split('x')
+    imW, imH = int(resW), int(resH)
+    use_TPU = args.edgetpu
 
-MODEL_NAME = args.modeldir
-GRAPH_NAME = args.graph
-LABELMAP_NAME = args.labels
-min_conf_threshold = float(args.threshold)
-resW, resH = args.resolution.split('x')
-imW, imH = int(resW), int(resH)
-use_TPU = args.edgetpu
+    # Import TensorFlow libraries
+    # If tflite_runtime is installed, import interpreter from tflite_runtime, else import from regular tensorflow
+    # If using Coral Edge TPU, import the load_delegate library
+    pkg = importlib.util.find_spec('tflite_runtime')
+    if pkg:
+        from tflite_runtime.interpreter import Interpreter
+        if use_TPU:
+            from tflite_runtime.interpreter import load_delegate
+    else:
+        from tensorflow.lite.python.interpreter import Interpreter
+        if use_TPU:
+            from tensorflow.lite.python.interpreter import load_delegate
 
-# Import TensorFlow libraries
-# If tflite_runtime is installed, import interpreter from tflite_runtime, else import from regular tensorflow
-# If using Coral Edge TPU, import the load_delegate library
-pkg = importlib.util.find_spec('tflite_runtime')
-if pkg:
-    from tflite_runtime.interpreter import Interpreter
+    # If using Edge TPU, assign filename for Edge TPU model
     if use_TPU:
-        from tflite_runtime.interpreter import load_delegate
-else:
-    from tensorflow.lite.python.interpreter import Interpreter
+        # If user has specified the name of the .tflite file, use that name, otherwise use default 'edgetpu.tflite'
+        if (GRAPH_NAME == 'detect.tflite'):
+            GRAPH_NAME = 'edgetpu.tflite'       
+
+    # Get path to current working directory
+    CWD_PATH = os.getcwd()
+
+    # Path to .tflite file, which contains the model that is used for object detection
+    PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
+
+    # Path to label map file
+    PATH_TO_LABELS = os.path.join(CWD_PATH,MODEL_NAME,LABELMAP_NAME)
+
+    # Load the label map
+    with open(PATH_TO_LABELS, 'r') as f:
+        labels = [line.strip() for line in f.readlines()]
+
+    # Have to do a weird fix for label map if using the COCO "starter model" from
+    # https://www.tensorflow.org/lite/models/object_detection/overview
+    # First label is '???', which has to be removed.
+    if labels[0] == '???':
+        del(labels[0])
+
+    # Load the Tensorflow Lite model.
+    # If using Edge TPU, use special load_delegate argument
     if use_TPU:
-        from tensorflow.lite.python.interpreter import load_delegate
+        interpreter = Interpreter(model_path=PATH_TO_CKPT,
+                                experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
+        print(PATH_TO_CKPT)
+    else:
+        interpreter = Interpreter(model_path=PATH_TO_CKPT)
 
-# If using Edge TPU, assign filename for Edge TPU model
-if use_TPU:
-    # If user has specified the name of the .tflite file, use that name, otherwise use default 'edgetpu.tflite'
-    if (GRAPH_NAME == 'detect.tflite'):
-        GRAPH_NAME = 'edgetpu.tflite'       
+    interpreter.allocate_tensors()
 
-# Get path to current working directory
-CWD_PATH = os.getcwd()
+    # Get model details
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    height = input_details[0]['shape'][1]
+    width = input_details[0]['shape'][2]
 
-# Path to .tflite file, which contains the model that is used for object detection
-PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
+    floating_model = (input_details[0]['dtype'] == np.float32)
 
-# Path to label map file
-PATH_TO_LABELS = os.path.join(CWD_PATH,MODEL_NAME,LABELMAP_NAME)
+    input_mean = 127.5
+    input_std = 127.5
 
-# Load the label map
-with open(PATH_TO_LABELS, 'r') as f:
-    labels = [line.strip() for line in f.readlines()]
+    # Initialize frame rate calculation
+    frame_rate_calc = 1
+    freq = cv2.getTickFrequency()
 
-# Have to do a weird fix for label map if using the COCO "starter model" from
-# https://www.tensorflow.org/lite/models/object_detection/overview
-# First label is '???', which has to be removed.
-if labels[0] == '???':
-    del(labels[0])
+    # Initialize video stream
+    videostream = VideoStream(resolution=(imW,imH),framerate=30).start()
+    time.sleep(1)
 
-# Load the Tensorflow Lite model.
-# If using Edge TPU, use special load_delegate argument
-if use_TPU:
-    interpreter = Interpreter(model_path=PATH_TO_CKPT,
-                              experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
-    print(PATH_TO_CKPT)
-else:
-    interpreter = Interpreter(model_path=PATH_TO_CKPT)
+    #for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
-interpreter.allocate_tensors()
-
-# Get model details
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-height = input_details[0]['shape'][1]
-width = input_details[0]['shape'][2]
-
-floating_model = (input_details[0]['dtype'] == np.float32)
-
-input_mean = 127.5
-input_std = 127.5
-
-# Initialize frame rate calculation
-frame_rate_calc = 1
-freq = cv2.getTickFrequency()
-
-# Initialize video stream
-videostream = VideoStream(resolution=(imW,imH),framerate=30).start()
-time.sleep(1)
-
-#for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
-
-cpt = 0
-previousValue = 0
-while True:
-    previousValue = cpt
     cpt = 0
+    previousValue = 0
+    while True:
+        previousValue = cpt
+        cpt = 0
 
-    # Grab frame from video stream
-    frame1 = videostream.read()
+        # Grab frame from video stream
+        frame1 = videostream.read()
 
-    # Acquire frame and resize to expected shape [1xHxWx3]
-    frame = frame1.copy()
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame_resized = cv2.resize(frame_rgb, (width, height))
-    input_data = np.expand_dims(frame_resized, axis=0)
+        # Acquire frame and resize to expected shape [1xHxWx3]
+        frame = frame1.copy()
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (width, height))
+        input_data = np.expand_dims(frame_resized, axis=0)
 
-    # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
-    if floating_model:
-        input_data = (np.float32(input_data) - input_mean) / input_std
+        # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
+        if floating_model:
+            input_data = (np.float32(input_data) - input_mean) / input_std
 
-    # Perform the actual detection by running the model with the image as input
-    interpreter.set_tensor(input_details[0]['index'],input_data)
-    interpreter.invoke()
+        # Perform the actual detection by running the model with the image as input
+        interpreter.set_tensor(input_details[0]['index'],input_data)
+        interpreter.invoke()
 
-    # Retrieve detection results
-    boxes = interpreter.get_tensor(output_details[0]['index'])[0] # Bounding box coordinates of detected objects
-    classes = interpreter.get_tensor(output_details[1]['index'])[0] # Class index of detected objects
-    scores = interpreter.get_tensor(output_details[2]['index'])[0] # Confidence of detected objects
-    #num = interpreter.get_tensor(output_details[3]['index'])[0]  # Total number of detected objects (inaccurate and not needed)
+        # Retrieve detection results
+        boxes = interpreter.get_tensor(output_details[0]['index'])[0] # Bounding box coordinates of detected objects
+        classes = interpreter.get_tensor(output_details[1]['index'])[0] # Class index of detected objects
+        scores = interpreter.get_tensor(output_details[2]['index'])[0] # Confidence of detected objects
+        #num = interpreter.get_tensor(output_details[3]['index'])[0]  # Total number of detected objects (inaccurate and not needed)
 
-    # Loop over all detections and draw detection box if confidence is above minimum threshold
-    for i in range(len(scores)):
-        if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
-            object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
-            if object_name == "person":
-                cpt = cpt +1
-    if cpt != previousValue :
-        client.publish(TOPIC_SEND_PRES, cpt)
-        print(cpt, flush=True)
-videostream.stop()
+        # Loop over all detections and draw detection box if confidence is above minimum threshold
+        for i in range(len(scores)):
+            if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
+                object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
+                if object_name == "person":
+                    cpt = cpt +1
+        if cpt != previousValue :
+            client.publish(TOPIC_SEND_PRES, cpt)
+            print(cpt)
+    videostream.stop()
+
+def gen():
+    """Video streaming generator function."""
+    while True:
+        global outputFrame
+        # img = cv2.imread('output.jpg')
+        if outputFrame is None:
+            continue
+        (flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
+        if not flag:
+            continue
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+
+
+@app.route('/video_feed')
+def video_feed():
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    return Response(gen(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+if __name__ == '__main__':
+    t = threading.Thread(target=detect_motion)
+    t.daemon = True
+    t.start()
+    app.run(host='0.0.0.0', threaded=True)
