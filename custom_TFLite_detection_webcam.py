@@ -22,7 +22,7 @@ def on_disconnect(client, userdata, rc):
     try:
         print("Trying to Reconnect")
         client.connect(HOST_NAME, 1883)
-	print("Reconnected")
+        print("Reconnected")
     except:
         print("Error in Retrying to Connect with Broker")
 	
