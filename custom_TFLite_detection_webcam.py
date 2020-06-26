@@ -13,8 +13,9 @@ from flask_opencv_streamer.streamer import Streamer
 
 HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspberry/camera/presence"
-client = mqtt.Client("detection_script")
+client = mqtt.Client("detection_script", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=20)
+client.on_disconnect = on_disconnect
 print("Connected to MQQT", flush=True)
 
 port = 3030
