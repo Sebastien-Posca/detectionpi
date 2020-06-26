@@ -28,7 +28,7 @@ def on_disconnect(client, userdata, rc):
 	
 TOPIC_SEND_PRES = "raspberry/camera/presence"
 client = mqtt.Client("detection_script", clean_session=True)
-client.connect(HOST_NAME, 1883, keepalive=2)
+client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
 print("Connected to MQQT", flush=True)
 
