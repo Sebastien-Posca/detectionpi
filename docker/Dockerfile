@@ -32,6 +32,9 @@ RUN apt-get install -y  \
 RUN pip3 install opencv-python==3.4.6.27
 RUN pip3 install https://dl.google.com/coral/python/tflite_runtime-2.1.0.post1-cp37-cp37m-linux_armv7l.whl
 RUN pip3 install paho-mqtt
+RUN pip3 install flask-opencv-streamer
+RUN pip3 install imutils
+
 
 ADD https://api.github.com/repos/Sebastien-Posca/detectionpi/git/refs/heads/master version.json
 RUN git clone https://github.com/Sebastien-Posca/detectionpi.git

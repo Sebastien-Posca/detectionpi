@@ -19,7 +19,7 @@ In the docker directory do :
 docker-compose up
 ```
 The number of person detected is send to the MQTT topic : "raspberry/camera/presence"  
-Video Streaming is done on port 5000
+Video Streaming is done on port 3030
 
 ## Stop the services
 In the docker directory do :
