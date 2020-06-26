@@ -10,6 +10,9 @@ import importlib.util
 import paho.mqtt.client as mqtt
 from flask_opencv_streamer.streamer import Streamer
 
+
+HOST_NAME = "mqtt"
+
 def on_disconnect(client, userdata, rc):
     print("Client Got Disconnected")
     if rc != 0:
@@ -18,16 +21,14 @@ def on_disconnect(client, userdata, rc):
         print('rc value:' + str(rc))
     try:
         print("Trying to Reconnect")
-        client.connect(broker_address, port)
-        client.subscribe("topic")
-        print('tried to subscribe')
+        client.connect(HOST_NAME, 1883)
+	print("Reconnected")
     except:
         print("Error in Retrying to Connect with Broker")
 	
-HOST_NAME = "mqtt"
 TOPIC_SEND_PRES = "raspberry/camera/presence"
 client = mqtt.Client("detection_script", clean_session=True)
-client.connect(HOST_NAME, 1883, keepalive=20)
+client.connect(HOST_NAME, 1883, keepalive=2)
 client.on_disconnect = on_disconnect
 print("Connected to MQQT", flush=True)
 
@@ -172,8 +173,8 @@ time.sleep(1)
 
 #for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
-cpt = 0
-previousValue = 0
+cpt = -1
+previousValue = -1
 while True:
     previousValue = cpt
     cpt = 0
