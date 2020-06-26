@@ -21,7 +21,19 @@ port = 3030
 require_login = False
 streamer = Streamer(port, require_login)
 
-
+def on_disconnect(client, userdata, rc):
+    print("Client Got Disconnected")
+    if rc != 0:
+        print('Unexpected MQTT disconnection. Will auto-reconnect')
+    else:
+        print('rc value:' + str(rc))
+    try:
+        print("Trying to Reconnect")
+        client.connect(broker_address, port)
+        client.subscribe("topic")
+        print('tried to subscribe')
+    except:
+        print("Error in Retrying to Connect with Broker")
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
 # Source - Adrian Rosebrock, PyImageSearch: https://www.pyimagesearch.com/2015/12/28/increasing-raspberry-pi-fps-with-python-and-opencv/
