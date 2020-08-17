@@ -224,7 +224,8 @@ while True:
             # Draw label
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             if object_name == "person":
-                cpt = cpt +1
+                if int(scores[i]*100) > 50:
+                    cpt=cpt+1
                 if maxscores < int(scores[i]*100):
                     maxscores = int(scores[i]*100)
 
@@ -233,8 +234,10 @@ while True:
             label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
             cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
             cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
-    if maxscores > 50 and cpt > 0:
+    if cpt > 0:
         presence = True
+    if presence == False:
+        maxscores = 1
     MQTT_MSG=json.dumps({"persons": cpt,"presence":  presence,"precision": maxscores})
     client.publish(TOPIC_SEND_DETECTION, MQTT_MSG)
     streamer.update_frame(frame)
