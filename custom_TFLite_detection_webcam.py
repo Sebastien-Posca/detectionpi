@@ -10,6 +10,7 @@ import importlib.util
 import paho.mqtt.client as mqtt
 from flask_opencv_streamer.streamer import Streamer
 import imutils as im
+import json
 
 HOST_NAME = "mqtt"
 
@@ -26,9 +27,10 @@ def on_disconnect(client, userdata, rc):
     except:
         print("Error in Retrying to Connect with Broker")
 	
-TOPIC_SEND_PRES = "camera/presence"
-TOPIC_SEND_% = "camera/precision"
+TOPIC_SEND_PRES = "camera/persons"
+TOPIC_SEND_PREC = "camera/precision"
 TOPIC_SEND_TYPE = "camera/type"
+TOPIC_SEND_DETECTION = "camera/detection"
 
 client = mqtt.Client("detection_script", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
@@ -181,6 +183,8 @@ previousValue = -1
 while True:
     previousValue = cpt
     cpt = 0
+    maxscores = -1
+    presence = False
 
     # Grab frame from video stream
     frame1 = videostream.read()
@@ -221,18 +225,18 @@ while True:
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             if object_name == "person":
                 cpt = cpt +1
-            client.publish("camera/type", object_name)
-            client.publish("camera/precision", int(scores[i]*100))
+                if maxscores < int(scores[i]*100):
+                    maxscores = int(scores[i]*100)
+
             label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
             labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
             label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
             cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
             cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
-    
-    if cpt != previousValue :
-        client.publish(TOPIC_SEND_PRES, cpt)
-        print(cpt, flush=True)
-    
+    if maxscores > 50 and cpt > 0:
+        presence = True
+    MQTT_MSG=json.dumps({"persons": cpt,"presence":  maxscores,"precision": maxscores})
+    client.publish(TOPIC_SEND_DETECTION, MQTT_MSG)
     streamer.update_frame(frame)
 
     if not streamer.is_streaming:
