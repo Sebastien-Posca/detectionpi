@@ -235,7 +235,7 @@ while True:
             cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
     if maxscores > 50 and cpt > 0:
         presence = True
-    MQTT_MSG=json.dumps({"persons": cpt,"presence":  maxscores,"precision": maxscores})
+    MQTT_MSG=json.dumps({"persons": cpt,"presence":  presence,"precision": maxscores})
     client.publish(TOPIC_SEND_DETECTION, MQTT_MSG)
     streamer.update_frame(frame)
 
