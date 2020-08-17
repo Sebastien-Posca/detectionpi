@@ -218,6 +218,8 @@ while True:
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             if object_name == "person":
                 cpt = cpt +1
+		client.publish("camera/type", "person")
+		client.publish("camera/precision", int(scores[i]*100))
             label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
             labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
             label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
@@ -227,6 +229,7 @@ while True:
     if cpt != previousValue :
         client.publish(TOPIC_SEND_PRES, cpt)
         print(cpt, flush=True)
+    
     
     streamer.update_frame(frame)
 
