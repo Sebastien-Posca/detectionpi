@@ -2,12 +2,7 @@ FROM  balenalib/rpi-raspbian:buster
 
 WORKDIR /tmp
 
-RUN # Install compile dependencies
-RUN apt-get update
-# RUN apt-get dist-upgrade -y
-RUN apt-get install -y wget
-
-RUN apt-get install -y  \
+RUN apt-get update && apt-get install -y  \
     git build-essential \
     python3 \
     python3-pip \
@@ -28,11 +23,14 @@ RUN apt-get install -y  \
     libx264-dev \
     qt4-dev-tools \
     libatlas-base-dev \
-    libqt4-test
+    libqt4-test \
+    wget
+
 
 RUN pip3 install opencv-python==3.4.6.27
 RUN pip3 install https://dl.google.com/coral/python/tflite_runtime-2.1.0.post1-cp37-cp37m-linux_armv7l.whl
 RUN pip3 install paho-mqtt
+RUN apt-get install -y python3-setuptools
 RUN pip3 install flask-opencv-streamer
 RUN pip3 install imutils
 
