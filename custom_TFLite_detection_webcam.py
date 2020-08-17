@@ -9,7 +9,7 @@ from threading import Thread
 import importlib.util
 import paho.mqtt.client as mqtt
 from flask_opencv_streamer.streamer import Streamer
-
+import imutils as im
 
 HOST_NAME = "mqtt"
 
@@ -26,7 +26,10 @@ def on_disconnect(client, userdata, rc):
     except:
         print("Error in Retrying to Connect with Broker")
 	
-TOPIC_SEND_PRES = "raspberry/camera/presence"
+TOPIC_SEND_PRES = "camera/presence"
+TOPIC_SEND_% = "camera/precision"
+TOPIC_SEND_TYPE = "camera/type"
+
 client = mqtt.Client("detection_script", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
@@ -72,7 +75,7 @@ class VideoStream:
 
     def read(self):
 	# Return the most recent frame
-        return self.frame
+        return im.rotate(self.frame, 180)
 
     def stop(self):
 	# Indicate that the camera and thread should be stopped
@@ -218,8 +221,8 @@ while True:
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             if object_name == "person":
                 cpt = cpt +1
-		client.publish("camera/type", "person")
-		client.publish("camera/precision", int(scores[i]*100))
+            client.publish("camera/type", object_name)
+            client.publish("camera/precision", int(scores[i]*100))
             label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
             labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
             label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
@@ -229,7 +232,6 @@ while True:
     if cpt != previousValue :
         client.publish(TOPIC_SEND_PRES, cpt)
         print(cpt, flush=True)
-    
     
     streamer.update_frame(frame)
 
