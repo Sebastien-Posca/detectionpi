@@ -1,7 +1,6 @@
 FROM  balenalib/rpi-raspbian:buster
 
 WORKDIR /tmp
-ARG argname=false
 ENV PYTHONARG=--edgetpu
 
 RUN apt-get update && apt-get install -y  \
@@ -38,18 +37,15 @@ RUN pip3 install imutils
 
 
 ADD https://api.github.com/repos/Sebastien-Posca/detectionpi/git/refs/heads/dev version.json
-RUN git clone -branch dev https://github.com/Sebastien-Posca/detectionpi.git
+RUN git clone --branch dev https://github.com/Sebastien-Posca/detectionpi.git
 WORKDIR /tmp/detectionpi
 RUN apt-get install -y unzip
 RUN wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip && unzip coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip -d Sample_TFLite_model
+RUN echo "deb http://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list 
+RUN curl http://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - 
+RUN apt-get update && apt-get install -y libedgetpu1-std 
+RUN wget https://dl.google.com/coral/canned_models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite 
+RUN mv mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite Sample_TFLite_model/edgetpu.tflite 
 
-RUN if ["NOTPU" = "false"]; then \
-    echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-    apt-get update && apt-get install -y \
-    libedgetpu1-std \
-    wget https://dl.google.com/coral/canned_models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite \
-    mv mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite Sample_TFLite_model/edgetpu.tflite \
-;fi
 
-CMD python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model $ENV1
+CMD python3 custom_TFLite_detection_webcam.py --modeldir=Sample_TFLite_model $PYTHONARG
