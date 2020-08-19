@@ -36,8 +36,8 @@ RUN pip3 install flask-opencv-streamer
 RUN pip3 install imutils
 
 
-ADD https://api.github.com/repos/Sebastien-Posca/detectionpi/git/refs/heads/dev version.json
-RUN git clone --branch dev https://github.com/Sebastien-Posca/detectionpi.git
+ADD https://api.github.com/repos/Sebastien-Posca/detectionpi/git/refs/heads/master version.json
+RUN git clone https://github.com/Sebastien-Posca/detectionpi.git
 WORKDIR /tmp/detectionpi
 RUN apt-get install -y unzip
 RUN wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip && unzip coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip -d Sample_TFLite_model
